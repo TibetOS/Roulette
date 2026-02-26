@@ -121,27 +121,60 @@ export function createBoard(
 
   container.appendChild(table)
 
-  function updateChips(bets: Bet[]) {
-    // Clear existing chip indicators
-    table.querySelectorAll('.chip-indicator').forEach((el) => el.remove())
+  // Diff-based chip tracking (#20): only add/remove/update chips that changed
+  const chipMap = new Map<string, { cell: HTMLElement; element: HTMLElement; amount: number }>()
 
+  function betKey(bet: Bet): string {
+    return bet.type === 'straight' ? `straight-${bet.numbers[0]}` : bet.type
+  }
+
+  function findCell(bet: Bet): HTMLElement | null {
+    if (bet.type === 'straight') {
+      const num = bet.numbers[0]
+      return (num === 0
+        ? table.querySelector('.zero-cell')
+        : grid.querySelector(`[data-num="${num}"]`)) as HTMLElement | null
+    }
+    const cells = table.querySelectorAll('.cell')
+    for (const cell of cells) {
+      if (matchesBetCell(cell as HTMLElement, bet)) return cell as HTMLElement
+    }
+    return null
+  }
+
+  function updateChips(bets: Bet[]) {
+    const incoming = new Map<string, Bet>()
     for (const bet of bets) {
-      if (bet.type === 'straight') {
-        const num = bet.numbers[0]
-        const cell = num === 0
-          ? table.querySelector('.zero-cell')
-          : grid.querySelector(`[data-num="${num}"]`)
-        if (cell) addChipIndicator(cell as HTMLElement, bet.amount)
+      incoming.set(betKey(bet), bet)
+    }
+
+    // Remove chips no longer present
+    for (const [key, entry] of chipMap) {
+      if (!incoming.has(key)) {
+        entry.element.remove()
+        chipMap.delete(key)
       }
-      // For outside/column/dozen bets, find by text content match
-      if (['column', 'dozen', 'red', 'black', 'odd', 'even', 'low', 'high'].includes(bet.type)) {
-        const cells = table.querySelectorAll('.cell')
-        for (const cell of cells) {
-          const cellEl = cell as HTMLElement
-          if (matchesBetCell(cellEl, bet)) {
-            addChipIndicator(cellEl, bet.amount)
-            break
-          }
+    }
+
+    // Add or update chips
+    for (const [key, bet] of incoming) {
+      const existing = chipMap.get(key)
+      if (existing) {
+        // Update amount text if changed
+        if (existing.amount !== bet.amount) {
+          existing.element.textContent = String(bet.amount)
+          existing.amount = bet.amount
+        }
+      } else {
+        const cell = findCell(bet)
+        if (cell) {
+          const chip = document.createElement('div')
+          chip.className = 'chip-indicator chip-new'
+          chip.textContent = String(bet.amount)
+          cell.appendChild(chip)
+          // Remove entrance animation class after it plays
+          chip.addEventListener('animationend', () => chip.classList.remove('chip-new'), { once: true })
+          chipMap.set(key, { cell, element: chip, amount: bet.amount })
         }
       }
     }
@@ -170,13 +203,6 @@ function makeCell(
     }
   })
   return cell
-}
-
-function addChipIndicator(cell: HTMLElement, amount: number): void {
-  const chip = document.createElement('div')
-  chip.className = 'chip-indicator'
-  chip.textContent = String(amount)
-  cell.appendChild(chip)
 }
 
 function matchesBetCell(cell: HTMLElement, bet: Bet): boolean {

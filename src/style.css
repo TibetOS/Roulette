@@ -353,6 +353,9 @@ main {
   border: 2px dashed rgba(255, 255, 255, 0.5);
   pointer-events: none;
   z-index: 2;
+}
+
+.chip-indicator.chip-new {
   animation: chipDrop 0.2s ease-out;
 }
 
@@ -466,7 +469,7 @@ main {
   .result-badge,
   .win-message,
   .lose-message,
-  .chip-indicator,
+  .chip-indicator.chip-new,
   #game-over-overlay {
     animation: none;
   }
