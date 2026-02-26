@@ -4,6 +4,7 @@ export function createGameState(initialBalance = 1000): GameState {
   return {
     balance: initialBalance,
     bets: [],
+    lastBets: [],
     selectedChip: 5,
     phase: 'betting',
     lastResult: null,
@@ -38,7 +39,9 @@ export function getTotalBet(state: GameState): number {
 }
 
 export function generateResult(): number {
-  return Math.floor(Math.random() * 37) // 0-36
+  const arr = new Uint32Array(1)
+  crypto.getRandomValues(arr)
+  return arr[0]! % 37 // 0-36
 }
 
 export function resolveBets(state: GameState, result: number): number {
@@ -52,11 +55,47 @@ export function resolveBets(state: GameState, result: number): number {
   }
 
   const totalBet = getTotalBet(state)
-  state.balance = state.balance - totalBet + totalWin
+  state.balance = Math.max(0, state.balance - totalBet + totalWin)
   state.lastResult = result
   state.lastWinAmount = totalWin
 
+  // Save current bets as lastBets before clearing
+  state.lastBets = state.bets.map((b) => ({ ...b }))
+
   return totalWin
+}
+
+export function isBankrupt(state: GameState): boolean {
+  return state.balance === 0 && state.bets.length === 0
+}
+
+export function repeatBets(state: GameState): boolean {
+  if (state.phase !== 'betting') return false
+  if (state.lastBets.length === 0) return false
+
+  const totalNeeded = state.lastBets.reduce((sum, b) => sum + b.amount, 0)
+  if (totalNeeded > state.balance - getTotalBet(state)) return false
+
+  for (const bet of state.lastBets) {
+    const existing = state.bets.find(
+      (b) => b.type === bet.type && arraysEqual(b.numbers, bet.numbers),
+    )
+    if (existing) {
+      existing.amount += bet.amount
+    } else {
+      state.bets.push({ ...bet })
+    }
+  }
+
+  return true
+}
+
+export function undoLastBet(state: GameState): boolean {
+  if (state.phase !== 'betting') return false
+  if (state.bets.length === 0) return false
+
+  state.bets.pop()
+  return true
 }
 
 function isBetWin(bet: Bet, result: number): boolean {

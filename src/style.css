@@ -152,7 +152,7 @@ main {
   justify-content: center;
 }
 
-#spin-btn, #clear-btn {
+#spin-btn, #clear-btn, #repeat-btn, #undo-btn {
   padding: 12px 28px;
   border: none;
   border-radius: 6px;
@@ -179,18 +179,32 @@ main {
   cursor: not-allowed;
 }
 
-#clear-btn {
+#clear-btn, #repeat-btn, #undo-btn {
   background: #333;
   color: #ccc;
 }
 
-#clear-btn:hover:not(:disabled) {
+#clear-btn:hover:not(:disabled),
+#repeat-btn:hover:not(:disabled),
+#undo-btn:hover:not(:disabled) {
   background: #444;
 }
 
-#clear-btn:disabled {
+#clear-btn:disabled,
+#repeat-btn:disabled,
+#undo-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+#repeat-btn {
+  background: linear-gradient(135deg, #2a6a3a, #1a4a2a);
+  color: #aed6a0;
+}
+
+#undo-btn {
+  background: linear-gradient(135deg, #6a3a2a, #4a2a1a);
+  color: #d6a0a0;
 }
 
 .win-message, .lose-message {
@@ -208,7 +222,7 @@ main {
 }
 
 .lose-message {
-  color: #888;
+  color: #b0b0b0;
 }
 
 /* Board */
@@ -328,6 +342,177 @@ main {
 
 .hidden {
   display: none !important;
+}
+
+/* New Game button */
+#new-game-btn {
+  padding: 8px 18px;
+  border: 1px solid #d4a34a;
+  border-radius: 6px;
+  background: transparent;
+  color: #d4a34a;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+
+#new-game-btn:hover {
+  background: rgba(212, 163, 74, 0.15);
+}
+
+/* Game Over Overlay */
+#game-over-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+#game-over-modal {
+  background: linear-gradient(135deg, #1a2a1a, #0a1a0a);
+  border: 2px solid #d4a34a;
+  border-radius: 12px;
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+}
+
+#game-over-modal h2 {
+  font-size: 2rem;
+  color: #c0392b;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+#game-over-modal p {
+  color: #aaa;
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+}
+
+#restart-btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #d4a34a, #b8862a);
+  color: #1a1a2e;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+#restart-btn:hover {
+  background: linear-gradient(135deg, #e4b35a, #c8963a);
+  transform: scale(1.02);
+}
+
+/* Focus visible outlines for keyboard navigation */
+.cell:focus-visible,
+.chip:focus-visible,
+#spin-btn:focus-visible,
+#clear-btn:focus-visible,
+#repeat-btn:focus-visible,
+#undo-btn:focus-visible,
+#new-game-btn:focus-visible,
+#restart-btn:focus-visible {
+  outline: 3px solid #d4a34a;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .result-badge,
+  .win-message,
+  .lose-message,
+  .chip-indicator,
+  #game-over-overlay {
+    animation: none;
+  }
+
+  .chip,
+  .cell,
+  #spin-btn,
+  #clear-btn,
+  #repeat-btn,
+  #undo-btn,
+  #new-game-btn,
+  #restart-btn {
+    transition: none;
+  }
+}
+
+/* Colorblind mode */
+.colorblind-mode .cell.red {
+  background: repeating-linear-gradient(
+    45deg,
+    #c0392b,
+    #c0392b 4px,
+    #a02a1e 4px,
+    #a02a1e 8px
+  );
+}
+
+.colorblind-mode .cell.black {
+  background: radial-gradient(circle 2px, #555 1px, transparent 1px);
+  background-size: 6px 6px;
+  background-color: #1a1a2e;
+}
+
+.colorblind-mode .cell.red .cb-label,
+.colorblind-mode .cell.black .cb-label {
+  display: block;
+  font-size: 0.6rem;
+  line-height: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.cb-label {
+  display: none;
+}
+
+/* Colorblind toggle button */
+#colorblind-toggle {
+  padding: 8px 14px;
+  border: 1px solid #d4a34a;
+  border-radius: 6px;
+  background: transparent;
+  color: #d4a34a;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+
+#colorblind-toggle:hover {
+  background: rgba(212, 163, 74, 0.15);
+}
+
+#colorblind-toggle.active {
+  background: rgba(212, 163, 74, 0.3);
+  border-width: 2px;
 }
 
 /* Responsive */

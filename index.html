@@ -11,12 +11,14 @@
       <header>
         <h1>Roulette</h1>
         <div id="balance-display">Balance: <span id="balance">1000</span></div>
+        <button id="colorblind-toggle" aria-label="Toggle colorblind mode">CB</button>
+        <button id="new-game-btn">NEW GAME</button>
       </header>
 
       <main>
         <div id="wheel-container">
-          <canvas id="wheel-canvas" width="400" height="400"></canvas>
-          <div id="result-display" class="hidden"></div>
+          <canvas id="wheel-canvas" width="400" height="400" role="img" aria-label="Roulette wheel"></canvas>
+          <div id="result-display" class="hidden" aria-live="polite"></div>
         </div>
 
         <div id="controls">
@@ -25,14 +27,24 @@
           <div id="action-buttons">
             <button id="spin-btn" disabled>SPIN</button>
             <button id="clear-btn">CLEAR BETS</button>
+            <button id="repeat-btn" disabled>REPEAT</button>
+            <button id="undo-btn" disabled>UNDO</button>
           </div>
-          <div id="win-display" class="hidden"></div>
+          <div id="win-display" class="hidden" aria-live="polite"></div>
         </div>
 
         <div id="board-container">
           <div id="betting-board"></div>
         </div>
       </main>
+
+      <div id="game-over-overlay" class="hidden">
+        <div id="game-over-modal">
+          <h2>You're broke!</h2>
+          <p>Better luck next time.</p>
+          <button id="restart-btn">Restart with $1000</button>
+        </div>
+      </div>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
