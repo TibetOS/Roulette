@@ -1,0 +1,22 @@
+// Shared color palette — single source of truth for CSS and canvas
+export const COLORS = {
+  red: '#c0392b',
+  black: '#1a1a2e',
+  green: '#27ae60',
+  gold: '#d4a34a',
+  goldLight: '#e4b35a',
+  goldDark: '#b8862a',
+  chipGold: '#a07828',
+  felt: '#0e3d0e',
+  feltDark: '#0a1a0a',
+  feltMid: '#1a3a1a',
+  feltLight: '#2a5a2a',
+  feltBorder: '#2a4a2a',
+  feltBorderLight: '#3a5a3a',
+  background: '#0a0a12',
+  text: '#e8e0d0',
+  textMuted: '#aaa',
+  white: '#ffffff',
+  woodDark: '#2a1a0a',
+  ballShine: 'rgba(255,255,255,0.6)',
+} as const

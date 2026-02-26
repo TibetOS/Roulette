@@ -15,24 +15,30 @@ import {
 import { CHIP_VALUES, getPocketColor } from './types'
 import { saveBalance, loadBalance, clearSavedBalance } from './storage'
 
+function getEl<T extends HTMLElement>(id: string): T {
+  const el = document.getElementById(id)
+  if (!el) throw new Error(`Missing element #${id}`)
+  return el as T
+}
+
 let state = createGameState(loadBalance())
 
 // DOM refs
-const balanceEl = document.getElementById('balance')!
-const totalBetEl = document.getElementById('total-bet')!
-const spinBtn = document.getElementById('spin-btn') as HTMLButtonElement
-const clearBtn = document.getElementById('clear-btn') as HTMLButtonElement
-const repeatBtn = document.getElementById('repeat-btn') as HTMLButtonElement
-const undoBtn = document.getElementById('undo-btn') as HTMLButtonElement
-const newGameBtn = document.getElementById('new-game-btn') as HTMLButtonElement
-const chipSelector = document.getElementById('chip-selector')!
-const resultDisplay = document.getElementById('result-display')!
-const winDisplay = document.getElementById('win-display')!
-const wheelCanvas = document.getElementById('wheel-canvas') as HTMLCanvasElement
-const boardContainer = document.getElementById('board-container')!
-const gameOverOverlay = document.getElementById('game-over-overlay')!
-const restartBtn = document.getElementById('restart-btn') as HTMLButtonElement
-const colorblindToggle = document.getElementById('colorblind-toggle') as HTMLButtonElement
+const balanceEl = getEl<HTMLElement>('balance')
+const totalBetEl = getEl<HTMLElement>('total-bet')
+const spinBtn = getEl<HTMLButtonElement>('spin-btn')
+const clearBtn = getEl<HTMLButtonElement>('clear-btn')
+const repeatBtn = getEl<HTMLButtonElement>('repeat-btn')
+const undoBtn = getEl<HTMLButtonElement>('undo-btn')
+const newGameBtn = getEl<HTMLButtonElement>('new-game-btn')
+const chipSelector = getEl<HTMLElement>('chip-selector')
+const resultDisplay = getEl<HTMLElement>('result-display')
+const winDisplay = getEl<HTMLElement>('win-display')
+const wheelCanvas = getEl<HTMLCanvasElement>('wheel-canvas')
+const boardContainer = getEl<HTMLElement>('board-container')
+const gameOverOverlay = getEl<HTMLElement>('game-over-overlay')
+const restartBtn = getEl<HTMLButtonElement>('restart-btn')
+const colorblindToggle = getEl<HTMLButtonElement>('colorblind-toggle')
 
 // Wheel
 const wheel = createWheel(wheelCanvas)

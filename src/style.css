@@ -1,3 +1,24 @@
+:root {
+  --color-red: #c0392b;
+  --color-black: #1a1a2e;
+  --color-green: #27ae60;
+  --color-gold: #d4a34a;
+  --color-gold-light: #e4b35a;
+  --color-gold-dark: #b8862a;
+  --color-chip-gold: #a07828;
+  --color-felt: #0e3d0e;
+  --color-felt-dark: #0a1a0a;
+  --color-felt-mid: #1a3a1a;
+  --color-felt-light: #2a5a2a;
+  --color-felt-border: #2a4a2a;
+  --color-felt-border-light: #3a5a3a;
+  --color-background: #0a0a12;
+  --color-text: #e8e0d0;
+  --color-text-muted: #aaa;
+  --color-white: #ffffff;
+  --color-wood-dark: #2a1a0a;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -6,8 +27,8 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #0a0a12;
-  color: #e8e0d0;
+  background: var(--color-background);
+  color: var(--color-text);
   min-height: 100vh;
   overflow-x: hidden;
 }

@@ -105,7 +105,6 @@ function isBetWin(bet: Bet, result: number): boolean {
     case 'street':
     case 'corner':
     case 'sixline':
-      return bet.numbers.includes(result)
     case 'column':
     case 'dozen':
       return bet.numbers.includes(result)
