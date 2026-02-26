@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import {
   createGameState,
   placeBet,
@@ -87,8 +87,8 @@ describe('placeBet', () => {
   it('rejects when remaining balance cannot cover chip value', () => {
     const state = createGameState(10)
     state.selectedChip = 5
-    placeBet(state, { type: 'straight', numbers: [1] })
-    placeBet(state, { type: 'straight', numbers: [2] })
+    placeBet(state, { type: 'straight', numbers: [1] }) // 5 placed
+    placeBet(state, { type: 'straight', numbers: [2] }) // 5 placed, now 0 remaining
     const result = placeBet(state, { type: 'straight', numbers: [3] })
     expect(result).toBe(false)
     expect(state.bets).toHaveLength(2)
@@ -147,6 +147,22 @@ describe('generateResult', () => {
       expect(Number.isInteger(result)).toBe(true)
     }
   })
+
+  it('uses crypto.getRandomValues internally', () => {
+    const spy = vi.spyOn(crypto, 'getRandomValues').mockImplementation((array) => {
+      (array as Uint32Array)[0] = 0
+      return array as Uint32Array
+    })
+    expect(generateResult()).toBe(0)
+
+    spy.mockImplementation((array) => {
+      (array as Uint32Array)[0] = 36
+      return array as Uint32Array
+    })
+    expect(generateResult()).toBe(36)
+
+    spy.mockRestore()
+  })
 })
 
 describe('resolveBets', () => {
@@ -154,6 +170,7 @@ describe('resolveBets', () => {
     return {
       balance: 1000,
       bets: [],
+      lastBets: [],
       selectedChip: 5,
       phase: 'betting',
       lastResult: null,
@@ -168,6 +185,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'straight', numbers: [7], amount: 10 }],
     })
     const win = resolveBets(state, 7)
+    // win = 10 + 10 * 35 = 360
     expect(win).toBe(360)
     expect(state.balance).toBe(1000 - 10 + 360)
     expect(state.lastResult).toBe(7)
@@ -189,7 +207,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'split', numbers: [7, 8], amount: 10 }],
     })
     const win = resolveBets(state, 8)
-    expect(win).toBe(180)
+    expect(win).toBe(180) // 10 + 10*17
     expect(state.balance).toBe(1000 - 10 + 180)
   })
 
@@ -207,7 +225,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'street', numbers: [1, 2, 3], amount: 10 }],
     })
     const win = resolveBets(state, 2)
-    expect(win).toBe(120)
+    expect(win).toBe(120) // 10 + 10*11
   })
 
   it('loses street bet when result not in row', () => {
@@ -224,7 +242,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'corner', numbers: [1, 2, 4, 5], amount: 10 }],
     })
     const win = resolveBets(state, 5)
-    expect(win).toBe(90)
+    expect(win).toBe(90) // 10 + 10*8
   })
 
   it('loses corner bet when result not in square', () => {
@@ -241,7 +259,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'sixline', numbers: [1, 2, 3, 4, 5, 6], amount: 10 }],
     })
     const win = resolveBets(state, 3)
-    expect(win).toBe(60)
+    expect(win).toBe(60) // 10 + 10*5
   })
 
   it('loses sixline bet when result outside range', () => {
@@ -259,7 +277,7 @@ describe('resolveBets', () => {
       bets: [{ type: 'column', numbers: col1, amount: 10 }],
     })
     const win = resolveBets(state, 7)
-    expect(win).toBe(30)
+    expect(win).toBe(30) // 10 + 10*2
   })
 
   it('loses column bet when result not in column', () => {
@@ -295,15 +313,15 @@ describe('resolveBets', () => {
     const state = makeState({
       bets: [{ type: 'red', numbers: [], amount: 10 }],
     })
-    const win = resolveBets(state, 1)
-    expect(win).toBe(20)
+    const win = resolveBets(state, 1) // 1 is red
+    expect(win).toBe(20) // 10 + 10*1
   })
 
   it('loses red bet on black number', () => {
     const state = makeState({
       bets: [{ type: 'red', numbers: [], amount: 10 }],
     })
-    const win = resolveBets(state, 2)
+    const win = resolveBets(state, 2) // 2 is black
     expect(win).toBe(0)
   })
 
@@ -320,7 +338,7 @@ describe('resolveBets', () => {
     const state = makeState({
       bets: [{ type: 'black', numbers: [], amount: 10 }],
     })
-    const win = resolveBets(state, 2)
+    const win = resolveBets(state, 2) // 2 is black
     expect(win).toBe(20)
   })
 
@@ -328,7 +346,7 @@ describe('resolveBets', () => {
     const state = makeState({
       bets: [{ type: 'black', numbers: [], amount: 10 }],
     })
-    const win = resolveBets(state, 1)
+    const win = resolveBets(state, 1) // 1 is red
     expect(win).toBe(0)
   })
 
@@ -449,8 +467,11 @@ describe('resolveBets', () => {
         { type: 'odd', numbers: [], amount: 15 },
       ],
     })
+    // 7 is red and odd
     const win = resolveBets(state, 7)
-    // straight: 10 + 10*35 = 360, red: 20 + 20*1 = 40, odd: 15 + 15*1 = 30
+    // straight: 10 + 10*35 = 360
+    // red: 20 + 20*1 = 40
+    // odd: 15 + 15*1 = 30
     expect(win).toBe(430)
     const totalBet = 10 + 20 + 15
     expect(state.balance).toBe(1000 - totalBet + 430)

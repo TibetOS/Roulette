@@ -26,6 +26,7 @@ export type GamePhase = 'betting' | 'spinning' | 'result'
 export type GameState = {
   balance: number
   bets: Bet[]
+  lastBets: Bet[]
   selectedChip: number
   phase: GamePhase
   lastResult: number | null
