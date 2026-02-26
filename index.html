@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Roulette</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>" />
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Roulette</h1>
+        <div id="balance-display">Balance: <span id="balance">1000</span></div>
+      </header>
+
+      <main>
+        <div id="wheel-container">
+          <canvas id="wheel-canvas" width="400" height="400"></canvas>
+          <div id="result-display" class="hidden"></div>
+        </div>
+
+        <div id="controls">
+          <div id="chip-selector"></div>
+          <div id="bet-total">Total Bet: <span id="total-bet">0</span></div>
+          <div id="action-buttons">
+            <button id="spin-btn" disabled>SPIN</button>
+            <button id="clear-btn">CLEAR BETS</button>
+          </div>
+          <div id="win-display" class="hidden"></div>
+        </div>
+
+        <div id="board-container">
+          <div id="betting-board"></div>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
