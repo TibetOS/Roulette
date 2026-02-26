@@ -11,6 +11,15 @@ const ROWS = [
   [1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34],
 ]
 
+const OUTSIDE_BET_LABELS: Record<string, string> = {
+  low: 'Bet on 1-18',
+  even: 'Bet on Even',
+  red: 'Bet on Red',
+  black: 'Bet on Black',
+  odd: 'Bet on Odd',
+  high: 'Bet on 19-36',
+}
+
 export function createBoard(
   container: HTMLElement,
   onBet: BoardCallback,
@@ -22,9 +31,11 @@ export function createBoard(
 
   const table = document.createElement('div')
   table.className = 'board'
+  table.setAttribute('role', 'group')
+  table.setAttribute('aria-label', 'Roulette betting board')
 
   // Zero cell
-  const zeroCell = makeCell('0', 'green', () =>
+  const zeroCell = makeCell('0', 'green', 'Bet on number 0', () =>
     onBet({ type: 'straight', numbers: [0] }),
   )
   zeroCell.className += ' zero-cell'
@@ -37,10 +48,16 @@ export function createBoard(
   for (const row of ROWS) {
     for (const num of row) {
       const color = getPocketColor(num)
-      const cell = makeCell(String(num), color, () =>
+      const cell = makeCell(String(num), color, `Bet on number ${num}`, () =>
         onBet({ type: 'straight', numbers: [num] }),
       )
       cell.dataset['num'] = String(num)
+      if (color === 'red' || color === 'black') {
+        const cbLabel = document.createElement('span')
+        cbLabel.className = 'cb-label'
+        cbLabel.textContent = color === 'red' ? 'R' : 'B'
+        cell.appendChild(cbLabel)
+      }
       grid.appendChild(cell)
     }
   }
@@ -49,9 +66,10 @@ export function createBoard(
   // Column bets (2:1)
   const colBets = document.createElement('div')
   colBets.className = 'column-bets'
+  const colLabels = ['Bet on 3rd column', 'Bet on 2nd column', 'Bet on 1st column']
   for (let r = 0; r < 3; r++) {
     const row = ROWS[r]!
-    const cell = makeCell('2:1', 'col-bet', () =>
+    const cell = makeCell('2:1', 'col-bet', colLabels[r]!, () =>
       onBet({ type: 'column', numbers: [...row] }),
     )
     cell.dataset['betType'] = 'column'
@@ -70,7 +88,7 @@ export function createBoard(
   ]
   for (let di = 0; di < dozens.length; di++) {
     const d = dozens[di]!
-    const cell = makeCell(d.label, 'dozen-bet', () =>
+    const cell = makeCell(d.label, 'dozen-bet', `Bet on ${d.label}`, () =>
       onBet({ type: 'dozen', numbers: d.numbers }),
     )
     cell.dataset['betType'] = 'dozen'
@@ -94,7 +112,7 @@ export function createBoard(
 
   for (const ob of outsideBets) {
     const colorClass = ob.type === 'red' ? 'red' : ob.type === 'black' ? 'black' : 'outside-bet'
-    const cell = makeCell(ob.label, colorClass, () =>
+    const cell = makeCell(ob.label, colorClass, OUTSIDE_BET_LABELS[ob.type] ?? ob.label, () =>
       onBet({ type: ob.type, numbers: ob.numbers }),
     )
     outsideRow.appendChild(cell)
@@ -135,12 +153,22 @@ export function createBoard(
 function makeCell(
   text: string,
   colorClass: string,
+  ariaLabel: string,
   onClick: () => void,
 ): HTMLElement {
   const cell = document.createElement('div')
   cell.className = `cell ${colorClass}`
   cell.textContent = text
+  cell.setAttribute('role', 'button')
+  cell.setAttribute('tabindex', '0')
+  cell.setAttribute('aria-label', ariaLabel)
   cell.addEventListener('click', onClick)
+  cell.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  })
   return cell
 }
 
