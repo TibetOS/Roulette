@@ -455,7 +455,8 @@ main {
 #repeat-btn:focus-visible,
 #undo-btn:focus-visible,
 #new-game-btn:focus-visible,
-#restart-btn:focus-visible {
+#restart-btn:focus-visible,
+#colorblind-toggle:focus-visible {
   outline: 3px solid #d4a34a;
   outline-offset: 2px;
 }
