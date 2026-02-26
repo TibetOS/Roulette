@@ -1,7 +1,4 @@
-import { WHEEL_SEQUENCE, getPocketColor } from './types'
-
-const POCKET_COUNT = 37
-const POCKET_ARC = (Math.PI * 2) / POCKET_COUNT
+import { WHEEL_SEQUENCE_EU, formatNumber, getPocketColor } from './types'
 
 export type WheelState = {
   angle: number
@@ -10,11 +7,18 @@ export type WheelState = {
   targetPocket: number | null
 }
 
-export function createWheel(canvas: HTMLCanvasElement): {
+export function createWheel(
+  canvas: HTMLCanvasElement,
+  sequence: number[] = WHEEL_SEQUENCE_EU,
+): {
   state: WheelState
   draw: () => void
   spin: (targetNumber: number) => Promise<number>
+  setSequence: (seq: number[]) => void
 } {
+  let wheelSequence = sequence
+  let pocketCount = wheelSequence.length
+  let pocketArc = (Math.PI * 2) / pocketCount
   const ctx = canvas.getContext('2d')!
   const cx = canvas.width / 2
   const cy = canvas.height / 2
@@ -42,16 +46,16 @@ export function createWheel(canvas: HTMLCanvasElement): {
     ctx.fill()
 
     // Draw pockets
-    for (let i = 0; i < POCKET_COUNT; i++) {
-      const startAngle = state.angle + i * POCKET_ARC - POCKET_ARC / 2
-      const endAngle = startAngle + POCKET_ARC
+    for (let i = 0; i < pocketCount; i++) {
+      const startAngle = state.angle + i * pocketArc - pocketArc / 2
+      const endAngle = startAngle + pocketArc
 
       ctx.beginPath()
       ctx.moveTo(cx, cy)
       ctx.arc(cx, cy, outerR - 2, startAngle, endAngle)
       ctx.closePath()
 
-      const num = WHEEL_SEQUENCE[i]!
+      const num = wheelSequence[i]!
       const color = getPocketColor(num)
       ctx.fillStyle = color === 'red' ? '#c0392b' : color === 'black' ? '#1a1a2e' : '#27ae60'
       ctx.fill()
@@ -61,7 +65,7 @@ export function createWheel(canvas: HTMLCanvasElement): {
       ctx.stroke()
 
       // Number text
-      const textAngle = startAngle + POCKET_ARC / 2
+      const textAngle = startAngle + pocketArc / 2
       const textR = outerR * 0.82
       ctx.save()
       ctx.translate(
@@ -73,7 +77,7 @@ export function createWheel(canvas: HTMLCanvasElement): {
       ctx.font = 'bold 11px Arial'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(String(num), 0, 0)
+      ctx.fillText(formatNumber(num), 0, 0)
       ctx.restore()
     }
 
@@ -142,9 +146,9 @@ export function createWheel(canvas: HTMLCanvasElement): {
       state.spinning = true
       state.targetPocket = targetNumber
 
-      const targetIndex = WHEEL_SEQUENCE.indexOf(targetNumber)
+      const targetIndex = wheelSequence.indexOf(targetNumber)
       // Target angle: the pocket should be at the top (negative Y = -PI/2)
-      const targetPocketAngle = -Math.PI / 2 - targetIndex * POCKET_ARC
+      const targetPocketAngle = -Math.PI / 2 - targetIndex * pocketArc
 
       // Reduced motion: skip animation, jump directly to result
       if (prefersReducedMotion()) {
@@ -195,8 +199,15 @@ export function createWheel(canvas: HTMLCanvasElement): {
     })
   }
 
+  function setSequence(seq: number[]): void {
+    wheelSequence = seq
+    pocketCount = seq.length
+    pocketArc = (Math.PI * 2) / pocketCount
+    draw()
+  }
+
   // Initial draw
   draw()
 
-  return { state, draw, spin }
+  return { state, draw, spin, setSequence }
 }
