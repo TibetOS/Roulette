@@ -1,0 +1,236 @@
+/* UX Feature Styles - Sound, History, Feedback, Stats */
+
+/* Mute toggle */
+#mute-toggle {
+  padding: 8px 14px;
+  border: 1px solid #d4a34a;
+  border-radius: 6px;
+  background: transparent;
+  color: #d4a34a;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: background 0.2s;
+}
+
+#mute-toggle:hover {
+  background: rgba(212, 163, 74, 0.15);
+}
+
+#mute-toggle.active {
+  background: rgba(212, 163, 74, 0.3);
+  border-width: 2px;
+}
+
+/* Win/Lose cell flash feedback */
+.cell-win-flash {
+  animation: cellWinPulse 0.6s ease-in-out 3;
+}
+
+@keyframes cellWinPulse {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 16px 4px rgba(46, 204, 113, 0.8); filter: brightness(1.5); }
+}
+
+.cell-lose-flash {
+  animation: cellLoseFlash 0.4s ease-in-out 2;
+}
+
+@keyframes cellLoseFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; box-shadow: 0 0 8px 2px rgba(192, 57, 43, 0.6); }
+}
+
+/* Balance animation highlight */
+.balance-up {
+  color: #2ecc71 !important;
+  text-shadow: 0 0 8px rgba(46, 204, 113, 0.5);
+}
+
+.balance-down {
+  color: #c0392b !important;
+  text-shadow: 0 0 8px rgba(192, 57, 43, 0.5);
+}
+
+/* Confetti canvas */
+.confetti-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Panels row (history + stats) */
+#panels-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+#history-container, #stats-container {
+  background: linear-gradient(135deg, #1a2a1a, #0a1a0a);
+  border: 1px solid #2a4a2a;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-header, .stats-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.history-toggle, .stats-toggle {
+  background: none;
+  border: none;
+  color: #d4a34a;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.history-clear-btn, .stats-clear-btn {
+  background: none;
+  border: 1px solid #555;
+  color: #888;
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.history-clear-btn:hover, .stats-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.history-content.collapsed, .stats-content.collapsed {
+  display: none;
+}
+
+/* Hot/cold numbers */
+.hot-cold-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #2a4a2a;
+}
+
+.hot-numbers, .cold-numbers {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.hc-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.number-badge, .result-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.number-badge.red, .result-dot.red { background: #c0392b; }
+.number-badge.black, .result-dot.black { background: #1a1a2e; border: 1px solid #444; }
+.number-badge.green, .result-dot.green { background: #27ae60; }
+
+.results-strip {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a4a2a;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+}
+
+.history-bet-info {
+  color: #aaa;
+  flex: 1;
+}
+
+.history-net-win {
+  color: #2ecc71;
+  font-weight: bold;
+}
+
+.history-net-loss {
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.history-empty {
+  color: #666;
+  text-align: center;
+  padding: 16px;
+  font-style: italic;
+}
+
+/* Stats panel */
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid #1a2a1a;
+  font-size: 0.85rem;
+}
+
+.stat-label {
+  color: #aaa;
+}
+
+.stat-value {
+  font-weight: bold;
+  color: #e8e0d0;
+}
+
+.stat-positive { color: #2ecc71; }
+.stat-negative { color: #c0392b; }
+.stat-color-red { color: #c0392b; }
+.stat-color-green { color: #27ae60; }
+
+/* Responsive for panels */
+@media (max-width: 850px) {
+  #panels-row {
+    grid-template-columns: 1fr;
+  }
+}

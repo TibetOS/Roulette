@@ -3,14 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Play European roulette in your browser with realistic wheel animation and full betting board." />
+    <meta name="theme-color" content="#0a0a12" />
+    <meta property="og:title" content="Roulette - European Casino Game" />
+    <meta property="og:description" content="Play European roulette in your browser with realistic wheel animation and full betting board." />
+    <meta property="og:type" content="website" />
     <title>Roulette</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎰</text></svg>" />
+    <link rel="manifest" href="/manifest.json" />
   </head>
   <body>
     <div id="app">
       <header>
         <h1>Roulette</h1>
         <div id="balance-display">Balance: <span id="balance">1000</span></div>
+        <button id="mute-toggle" aria-label="Toggle sound">Sound: ON</button>
+        <button id="theme-toggle" aria-label="Toggle light/dark theme">LT</button>
         <button id="colorblind-toggle" aria-label="Toggle colorblind mode">CB</button>
         <button id="new-game-btn">NEW GAME</button>
       </header>
@@ -37,6 +45,11 @@
           <div id="betting-board"></div>
         </div>
       </main>
+
+      <div id="panels-row">
+        <div id="history-container"></div>
+        <div id="stats-container"></div>
+      </div>
 
       <div id="game-over-overlay" class="hidden">
         <div id="game-over-modal">
