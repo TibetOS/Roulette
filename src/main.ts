@@ -32,6 +32,7 @@ const wheelCanvas = document.getElementById('wheel-canvas') as HTMLCanvasElement
 const boardContainer = document.getElementById('board-container')!
 const gameOverOverlay = document.getElementById('game-over-overlay')!
 const restartBtn = document.getElementById('restart-btn') as HTMLButtonElement
+const colorblindToggle = document.getElementById('colorblind-toggle') as HTMLButtonElement
 
 // Wheel
 const wheel = createWheel(wheelCanvas)
@@ -165,6 +166,22 @@ function resetGame() {
 newGameBtn.addEventListener('click', resetGame)
 restartBtn.addEventListener('click', resetGame)
 
+// Colorblind mode
+function initColorblindMode() {
+  const saved = localStorage.getItem('roulette-colorblind') === 'true'
+  if (saved) {
+    boardContainer.classList.add('colorblind-mode')
+    colorblindToggle.classList.add('active')
+  }
+}
+
+colorblindToggle.addEventListener('click', () => {
+  const isActive = boardContainer.classList.toggle('colorblind-mode')
+  colorblindToggle.classList.toggle('active', isActive)
+  localStorage.setItem('roulette-colorblind', String(isActive))
+})
+
 // Init
 buildChipSelector()
+initColorblindMode()
 updateUI()
