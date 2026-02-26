@@ -23,6 +23,8 @@ export function createWheel(canvas: HTMLCanvasElement): {
   const ballR = outerR * 0.85
   const ballSize = 6
 
+  let rafId: number | null = null
+
   const state: WheelState = {
     angle: 0,
     ballAngle: 0,
@@ -121,6 +123,17 @@ export function createWheel(canvas: HTMLCanvasElement): {
   }
 
   function spin(targetNumber: number): Promise<number> {
+    // Cancel any in-progress animation
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId)
+      rafId = null
+    }
+
+    // Guard against double-call while spinning
+    if (state.spinning) {
+      state.spinning = false
+    }
+
     return new Promise((resolve) => {
       state.spinning = true
       state.targetPocket = targetNumber
@@ -156,14 +169,15 @@ export function createWheel(canvas: HTMLCanvasElement): {
         draw()
 
         if (progress < 1) {
-          requestAnimationFrame(animate)
+          rafId = requestAnimationFrame(animate)
         } else {
+          rafId = null
           state.spinning = false
           resolve(targetNumber)
         }
       }
 
-      requestAnimationFrame(animate)
+      rafId = requestAnimationFrame(animate)
     })
   }
 

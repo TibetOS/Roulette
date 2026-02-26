@@ -54,6 +54,8 @@ export function createBoard(
     const cell = makeCell('2:1', 'col-bet', () =>
       onBet({ type: 'column', numbers: [...row] }),
     )
+    cell.dataset['betType'] = 'column'
+    cell.dataset['betKey'] = `col-${r}`
     colBets.appendChild(cell)
   }
   table.appendChild(colBets)
@@ -66,10 +68,13 @@ export function createBoard(
     { label: '2nd 12', numbers: Array.from({ length: 12 }, (_, i) => i + 13) },
     { label: '3rd 12', numbers: Array.from({ length: 12 }, (_, i) => i + 25) },
   ]
-  for (const d of dozens) {
+  for (let di = 0; di < dozens.length; di++) {
+    const d = dozens[di]!
     const cell = makeCell(d.label, 'dozen-bet', () =>
       onBet({ type: 'dozen', numbers: d.numbers }),
     )
+    cell.dataset['betType'] = 'dozen'
+    cell.dataset['betKey'] = `dozen-${di}`
     dozenRow.appendChild(cell)
   }
   table.appendChild(dozenRow)
@@ -155,8 +160,18 @@ function matchesBetCell(cell: HTMLElement, bet: Bet): boolean {
     case 'even': return text === 'EVEN'
     case 'low': return text === '1-18'
     case 'high': return text === '19-36'
-    case 'column': return text === '2:1'
-    case 'dozen': return text.includes('12')
+    case 'column': {
+      if (cell.dataset['betType'] !== 'column') return false
+      const colIndex = ROWS.findIndex((row) =>
+        row.length === bet.numbers.length && row.every((n, i) => n === bet.numbers[i]),
+      )
+      return cell.dataset['betKey'] === `col-${colIndex}`
+    }
+    case 'dozen': {
+      if (cell.dataset['betType'] !== 'dozen') return false
+      const dozenIndex = bet.numbers[0] === 1 ? 0 : bet.numbers[0] === 13 ? 1 : 2
+      return cell.dataset['betKey'] === `dozen-${dozenIndex}`
+    }
     default: return false
   }
 }
