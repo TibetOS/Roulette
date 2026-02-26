@@ -13,7 +13,15 @@ import {
   repeatBets,
   undoLastBet,
 } from './game'
-import { type Bet, CHIP_VALUES, getPocketColor } from './types'
+import {
+  type Bet,
+  type RouletteMode,
+  CHIP_VALUES,
+  WHEEL_SEQUENCE_EU,
+  WHEEL_SEQUENCE_US,
+  formatNumber,
+  getPocketColor,
+} from './types'
 import { saveBalance, loadBalance, clearSavedBalance } from './storage'
 import { createSoundManager } from './sound'
 import { createHistoryManager } from './history'
@@ -55,17 +63,27 @@ const history = createHistoryManager(historyContainer)
 const feedback = createFeedbackManager()
 const statsManager = createStatsManager(statsContainer)
 
-// Wheel
-const wheel = createWheel(wheelCanvas)
+// Game mode
+let gameMode: RouletteMode = (localStorage.getItem('roulette-mode') as RouletteMode) ?? 'european'
+const modeToggle = getEl<HTMLButtonElement>('mode-toggle')
 
-// Board
-const board = createBoard(boardContainer, (bet) => {
+function isAmerican(): boolean {
+  return gameMode === 'american'
+}
+
+function betHandler(bet: Omit<Bet, 'amount'>): void {
   if (state.phase !== 'betting') return
   if (placeBet(state, bet)) {
     sound.play('chip')
     updateUI()
   }
-})
+}
+
+// Wheel
+const wheel = createWheel(wheelCanvas, isAmerican() ? WHEEL_SEQUENCE_US : WHEEL_SEQUENCE_EU)
+
+// Board
+let board = createBoard(boardContainer, betHandler, isAmerican())
 
 // Chip selector
 function buildChipSelector() {
@@ -135,7 +153,7 @@ spinBtn.addEventListener('click', async () => {
 
   sound.play('spin')
 
-  const result = generateResult()
+  const result = generateResult(isAmerican())
   await wheel.spin(result)
 
   sound.play('ballClatter')
@@ -151,7 +169,7 @@ spinBtn.addEventListener('click', async () => {
 
   // Show result
   const color = getPocketColor(result)
-  resultDisplay.textContent = String(result)
+  resultDisplay.textContent = formatNumber(result)
   resultDisplay.className = `result-badge ${color}`
   resultDisplay.classList.remove('hidden')
 
@@ -261,6 +279,25 @@ themeToggle.addEventListener('click', () => {
   themeToggle.textContent = isLight ? 'DK' : 'LT'
 })
 
+// American/European mode toggle (#31)
+function updateModeButton(): void {
+  modeToggle.textContent = isAmerican() ? 'US' : 'EU'
+}
+
+modeToggle.addEventListener('click', () => {
+  if (state.phase !== 'betting') return
+  gameMode = isAmerican() ? 'european' : 'american'
+  localStorage.setItem('roulette-mode', gameMode)
+
+  // Rebuild wheel and board for new mode
+  const seq = isAmerican() ? WHEEL_SEQUENCE_US : WHEEL_SEQUENCE_EU
+  wheel.setSequence(seq)
+  board = createBoard(boardContainer, betHandler, isAmerican())
+  clearBets(state)
+  updateModeButton()
+  updateUI()
+})
+
 // Keyboard shortcuts (#26)
 const CHIP_KEY_MAP: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3 }
 
@@ -303,4 +340,5 @@ buildChipSelector()
 initColorblindMode()
 initTheme()
 updateMuteButton()
+updateModeButton()
 updateUI()

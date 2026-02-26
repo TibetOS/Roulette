@@ -1,4 +1,4 @@
-import { type Bet, type GameState, PAYOUT_MAP, RED_NUMBERS } from './types'
+import { type Bet, type GameState, DOUBLE_ZERO, MAX_BET, PAYOUT_MAP, RED_NUMBERS } from './types'
 
 export function createGameState(initialBalance = 1000): GameState {
   return {
@@ -21,6 +21,10 @@ export function placeBet(state: GameState, bet: Omit<Bet, 'amount'>): boolean {
     (b) => b.type === bet.type && arraysEqual(b.numbers, bet.numbers),
   )
 
+  // Enforce max bet per position
+  const currentAmount = existing?.amount ?? 0
+  if (currentAmount + state.selectedChip > MAX_BET) return false
+
   if (existing) {
     existing.amount += state.selectedChip
   } else {
@@ -38,9 +42,14 @@ export function getTotalBet(state: GameState): number {
   return state.bets.reduce((sum, b) => sum + b.amount, 0)
 }
 
-export function generateResult(): number {
+export function generateResult(american = false): number {
   const arr = new Uint32Array(1)
   crypto.getRandomValues(arr)
+  if (american) {
+    // 38 pockets: 0-36 + double zero (-1)
+    const idx = arr[0]! % 38
+    return idx === 37 ? DOUBLE_ZERO : idx
+  }
   return arr[0]! % 37 // 0-36
 }
 

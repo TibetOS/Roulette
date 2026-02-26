@@ -1,9 +1,4 @@
-import { WHEEL_SEQUENCE, getPocketColor } from './types'
-
-// Geometry
-const POCKET_COUNT = 37
-const POCKET_ARC = (Math.PI * 2) / POCKET_COUNT
-const POCKET_INSET = 2
+import { WHEEL_SEQUENCE_EU, formatNumber, getPocketColor } from './types'
 
 // Geometry constants (CSS pixels)
 const CANVAS_PADDING = 10
@@ -14,6 +9,7 @@ const INNER_PATTERN_RATIO = 0.6
 const BALL_SIZE = 6
 const BALL_SHINE_OFFSET = 1.5
 const BALL_SHINE_SIZE_RATIO = 0.4
+const POCKET_INSET = 2
 const MARKER_OVERSHOOT = 8
 const MARKER_HALF_WIDTH = 8
 const MARKER_HEIGHT = 6
@@ -29,7 +25,6 @@ const EXTRA_DURATION_RANGE_MS = 1500
 // Ball bounce constants (#29)
 const BOUNCE_DURATION_MS = 600
 const BOUNCE_COUNT = 4
-const BOUNCE_AMPLITUDE = POCKET_ARC * 0.4
 
 // Colors
 const COLOR_RED = '#c0392b'
@@ -49,10 +44,19 @@ export type WheelState = {
   targetPocket: number | null
 }
 
-export function createWheel(canvas: HTMLCanvasElement): {
+export function createWheel(
+  canvas: HTMLCanvasElement,
+  sequence: number[] = WHEEL_SEQUENCE_EU,
+): {
+  state: WheelState
   draw: () => void
   spin: (targetNumber: number) => Promise<number>
+  setSequence: (seq: number[]) => void
 } {
+  let wheelSequence = sequence
+  let pocketCount = wheelSequence.length
+  let pocketArc = (Math.PI * 2) / pocketCount
+
   // HiDPI / Retina scaling (#8)
   const dpr = window.devicePixelRatio || 1
   const cssWidth = canvas.clientWidth || canvas.width
@@ -131,17 +135,17 @@ export function createWheel(canvas: HTMLCanvasElement): {
     ctx.fillStyle = COLOR_WOOD
     ctx.fill()
 
-    // Draw pockets (rotates each frame)
-    for (let i = 0; i < POCKET_COUNT; i++) {
-      const startAngle = state.angle + i * POCKET_ARC - POCKET_ARC / 2
-      const endAngle = startAngle + POCKET_ARC
+    // Draw pockets
+    for (let i = 0; i < pocketCount; i++) {
+      const startAngle = state.angle + i * pocketArc - pocketArc / 2
+      const endAngle = startAngle + pocketArc
 
       ctx.beginPath()
       ctx.moveTo(cx, cy)
       ctx.arc(cx, cy, outerR - POCKET_INSET, startAngle, endAngle)
       ctx.closePath()
 
-      const num = WHEEL_SEQUENCE[i]!
+      const num = wheelSequence[i]!
       const color = getPocketColor(num)
       ctx.fillStyle = color === 'red' ? COLOR_RED : color === 'black' ? COLOR_BLACK : COLOR_GREEN
       ctx.fill()
@@ -151,7 +155,7 @@ export function createWheel(canvas: HTMLCanvasElement): {
       ctx.stroke()
 
       // Number text
-      const textAngle = startAngle + POCKET_ARC / 2
+      const textAngle = startAngle + pocketArc / 2
       ctx.save()
       ctx.translate(
         cx + Math.cos(textAngle) * textR,
@@ -162,7 +166,7 @@ export function createWheel(canvas: HTMLCanvasElement): {
       ctx.font = 'bold 11px Arial'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.fillText(String(num), 0, 0)
+      ctx.fillText(formatNumber(num), 0, 0)
       ctx.restore()
     }
 
@@ -213,8 +217,9 @@ export function createWheel(canvas: HTMLCanvasElement): {
       state.spinning = true
       state.targetPocket = targetNumber
 
-      const targetIndex = WHEEL_SEQUENCE.indexOf(targetNumber)
-      const targetPocketAngle = -Math.PI / 2 - targetIndex * POCKET_ARC
+      const targetIndex = wheelSequence.indexOf(targetNumber)
+      const targetPocketAngle = -Math.PI / 2 - targetIndex * pocketArc
+      const bounceAmplitude = pocketArc * 0.4
 
       // Reduced motion: skip animation, jump directly to result
       if (prefersReducedMotion()) {
@@ -268,7 +273,7 @@ export function createWheel(canvas: HTMLCanvasElement): {
         // Damped oscillation: amplitude decays while oscillating
         const decay = 1 - bounceProgress
         const oscillation = Math.sin(bounceProgress * BOUNCE_COUNT * Math.PI * 2)
-        state.ballAngle = ballEnd + oscillation * decay * BOUNCE_AMPLITUDE
+        state.ballAngle = ballEnd + oscillation * decay * bounceAmplitude
 
         draw()
 
@@ -287,8 +292,15 @@ export function createWheel(canvas: HTMLCanvasElement): {
     })
   }
 
+  function setSequence(seq: number[]): void {
+    wheelSequence = seq
+    pocketCount = seq.length
+    pocketArc = (Math.PI * 2) / pocketCount
+    draw()
+  }
+
   // Initial draw
   draw()
 
-  return { draw, spin }
+  return { state, draw, spin, setSequence }
 }
