@@ -11,12 +11,13 @@
       <header>
         <h1>Roulette</h1>
         <div id="balance-display">Balance: <span id="balance">1000</span></div>
+        <button id="colorblind-toggle" aria-label="Toggle colorblind mode">CB</button>
       </header>
 
       <main>
         <div id="wheel-container">
-          <canvas id="wheel-canvas" width="400" height="400"></canvas>
-          <div id="result-display" class="hidden"></div>
+          <canvas id="wheel-canvas" width="400" height="400" role="img" aria-label="Roulette wheel"></canvas>
+          <div id="result-display" class="hidden" aria-live="polite"></div>
         </div>
 
         <div id="controls">
@@ -26,7 +27,7 @@
             <button id="spin-btn" disabled>SPIN</button>
             <button id="clear-btn">CLEAR BETS</button>
           </div>
-          <div id="win-display" class="hidden"></div>
+          <div id="win-display" class="hidden" aria-live="polite"></div>
         </div>
 
         <div id="board-container">

@@ -23,6 +23,7 @@ const resultDisplay = document.getElementById('result-display')!
 const winDisplay = document.getElementById('win-display')!
 const wheelCanvas = document.getElementById('wheel-canvas') as HTMLCanvasElement
 const boardContainer = document.getElementById('board-container')!
+const colorblindToggle = document.getElementById('colorblind-toggle') as HTMLButtonElement
 
 // Wheel
 const wheel = createWheel(wheelCanvas)
@@ -41,6 +42,7 @@ function buildChipSelector() {
     const chip = document.createElement('button')
     chip.className = `chip chip-${value}`
     chip.textContent = String(value)
+    chip.setAttribute('aria-label', `Select $${value} chip`)
     chip.addEventListener('click', () => {
       state.selectedChip = value
       updateChipSelection()
@@ -115,6 +117,22 @@ clearBtn.addEventListener('click', () => {
   updateUI()
 })
 
+// Colorblind mode
+function initColorblindMode() {
+  const saved = localStorage.getItem('roulette-colorblind') === 'true'
+  if (saved) {
+    boardContainer.classList.add('colorblind-mode')
+    colorblindToggle.classList.add('active')
+  }
+}
+
+colorblindToggle.addEventListener('click', () => {
+  const isActive = boardContainer.classList.toggle('colorblind-mode')
+  colorblindToggle.classList.toggle('active', isActive)
+  localStorage.setItem('roulette-colorblind', String(isActive))
+})
+
 // Init
 buildChipSelector()
+initColorblindMode()
 updateUI()
