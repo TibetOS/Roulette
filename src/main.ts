@@ -1,4 +1,5 @@
 import './style.css'
+import './ux-styles.css'
 import { createWheel } from './wheel'
 import { createBoard } from './board'
 import {
@@ -12,8 +13,20 @@ import {
   repeatBets,
   undoLastBet,
 } from './game'
-import { CHIP_VALUES, getPocketColor } from './types'
+import {
+  type Bet,
+  type RouletteMode,
+  CHIP_VALUES,
+  WHEEL_SEQUENCE_EU,
+  WHEEL_SEQUENCE_US,
+  formatNumber,
+  getPocketColor,
+} from './types'
 import { saveBalance, loadBalance, clearSavedBalance } from './storage'
+import { createSoundManager } from './sound'
+import { createHistoryManager } from './history'
+import { createFeedbackManager } from './feedback'
+import { createStatsManager } from './stats'
 
 function getEl<T extends HTMLElement>(id: string): T {
   const el = document.getElementById(id)
@@ -39,17 +52,38 @@ const boardContainer = getEl<HTMLElement>('board-container')
 const gameOverOverlay = getEl<HTMLElement>('game-over-overlay')
 const restartBtn = getEl<HTMLButtonElement>('restart-btn')
 const colorblindToggle = getEl<HTMLButtonElement>('colorblind-toggle')
+const muteToggle = getEl<HTMLButtonElement>('mute-toggle')
+const themeToggle = getEl<HTMLButtonElement>('theme-toggle')
+const historyContainer = getEl<HTMLElement>('history-container')
+const statsContainer = getEl<HTMLElement>('stats-container')
 
-// Wheel
-const wheel = createWheel(wheelCanvas)
+// UX managers
+const sound = createSoundManager()
+const history = createHistoryManager(historyContainer)
+const feedback = createFeedbackManager()
+const statsManager = createStatsManager(statsContainer)
 
-// Board
-const board = createBoard(boardContainer, (bet) => {
+// Game mode
+let gameMode: RouletteMode = (localStorage.getItem('roulette-mode') as RouletteMode) ?? 'european'
+const modeToggle = getEl<HTMLButtonElement>('mode-toggle')
+
+function isAmerican(): boolean {
+  return gameMode === 'american'
+}
+
+function betHandler(bet: Omit<Bet, 'amount'>): void {
   if (state.phase !== 'betting') return
   if (placeBet(state, bet)) {
+    sound.play('chip')
     updateUI()
   }
-})
+}
+
+// Wheel
+const wheel = createWheel(wheelCanvas, isAmerican() ? WHEEL_SEQUENCE_US : WHEEL_SEQUENCE_EU)
+
+// Board
+let board = createBoard(boardContainer, betHandler, isAmerican())
 
 // Chip selector
 function buildChipSelector() {
@@ -75,6 +109,17 @@ function updateChipSelection() {
   })
 }
 
+// Mute toggle
+function updateMuteButton() {
+  muteToggle.textContent = sound.muted ? 'Sound: OFF' : 'Sound: ON'
+  muteToggle.classList.toggle('active', !sound.muted)
+}
+
+muteToggle.addEventListener('click', () => {
+  sound.toggle()
+  updateMuteButton()
+})
+
 // UI update
 function updateUI() {
   balanceEl.textContent = String(state.balance)
@@ -98,32 +143,61 @@ function updateUI() {
 spinBtn.addEventListener('click', async () => {
   if (state.phase !== 'betting' || state.bets.length === 0) return
 
+  const betsSnapshot: Bet[] = state.bets.map((b) => ({ ...b }))
+  const balanceBefore = state.balance
+
   state.phase = 'spinning'
   updateUI()
   resultDisplay.classList.add('hidden')
   winDisplay.classList.add('hidden')
 
-  const result = generateResult()
+  sound.play('spin')
+
+  const result = generateResult(isAmerican())
   await wheel.spin(result)
+
+  sound.play('ballClatter')
 
   const winAmount = resolveBets(state, result)
   saveBalance(state.balance)
 
+  // Feedback: highlight winning/losing cells
+  feedback.highlightResult(result, betsSnapshot, boardContainer)
+
+  // Feedback: animate balance change
+  feedback.animateBalance(balanceEl, balanceBefore, state.balance)
+
   // Show result
   const color = getPocketColor(result)
-  resultDisplay.textContent = String(result)
+  resultDisplay.textContent = formatNumber(result)
   resultDisplay.className = `result-badge ${color}`
   resultDisplay.classList.remove('hidden')
+
+  // Determine if big win (straight bet win = 35:1 payout)
+  const isBigWin = betsSnapshot.some(
+    (b) => b.type === 'straight' && b.numbers.includes(result),
+  )
 
   // Show win/loss
   if (winAmount > 0) {
     winDisplay.textContent = `WIN +${winAmount}!`
     winDisplay.className = 'win-message'
+    if (isBigWin) {
+      sound.play('bigWin')
+      feedback.showConfetti(document.getElementById('app')!)
+    } else {
+      sound.play('win')
+    }
   } else {
     winDisplay.textContent = 'No win'
     winDisplay.className = 'lose-message'
+    sound.play('lose')
   }
   winDisplay.classList.remove('hidden')
+
+  // Record to history and stats
+  history.addEntry(result, betsSnapshot, winAmount)
+  statsManager.recordRound(betsSnapshot, winAmount)
 
   state.phase = 'result'
   state.bets = []
@@ -149,6 +223,7 @@ clearBtn.addEventListener('click', () => {
 // Repeat handler
 repeatBtn.addEventListener('click', () => {
   if (repeatBets(state)) {
+    sound.play('chip')
     updateUI()
   }
 })
@@ -166,6 +241,8 @@ function resetGame() {
   state = createGameState()
   resultDisplay.classList.add('hidden')
   winDisplay.classList.add('hidden')
+  history.clear()
+  statsManager.clear()
   updateUI()
 }
 
@@ -187,7 +264,81 @@ colorblindToggle.addEventListener('click', () => {
   localStorage.setItem('roulette-colorblind', String(isActive))
 })
 
+// Dark/light theme toggle (#32)
+function initTheme() {
+  const saved = localStorage.getItem('roulette-theme')
+  if (saved === 'light') {
+    document.documentElement.classList.add('light-theme')
+    themeToggle.textContent = 'DK'
+  }
+}
+
+themeToggle.addEventListener('click', () => {
+  const isLight = document.documentElement.classList.toggle('light-theme')
+  localStorage.setItem('roulette-theme', isLight ? 'light' : 'dark')
+  themeToggle.textContent = isLight ? 'DK' : 'LT'
+})
+
+// American/European mode toggle (#31)
+function updateModeButton(): void {
+  modeToggle.textContent = isAmerican() ? 'US' : 'EU'
+}
+
+modeToggle.addEventListener('click', () => {
+  if (state.phase !== 'betting') return
+  gameMode = isAmerican() ? 'european' : 'american'
+  localStorage.setItem('roulette-mode', gameMode)
+
+  // Rebuild wheel and board for new mode
+  const seq = isAmerican() ? WHEEL_SEQUENCE_US : WHEEL_SEQUENCE_EU
+  wheel.setSequence(seq)
+  board = createBoard(boardContainer, betHandler, isAmerican())
+  clearBets(state)
+  updateModeButton()
+  updateUI()
+})
+
+// Keyboard shortcuts (#26)
+const CHIP_KEY_MAP: Record<string, number> = { '1': 0, '2': 1, '3': 2, '4': 3 }
+
+document.addEventListener('keydown', (e) => {
+  const tag = (e.target as HTMLElement).tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
+  switch (e.key) {
+    case ' ': {
+      e.preventDefault()
+      if (!spinBtn.disabled) spinBtn.click()
+      break
+    }
+    case 'Escape': {
+      if (!clearBtn.disabled) clearBtn.click()
+      break
+    }
+    case 'r':
+    case 'R': {
+      if (!repeatBtn.disabled) repeatBtn.click()
+      break
+    }
+    case 'z':
+    case 'Z': {
+      if (!undoBtn.disabled) undoBtn.click()
+      break
+    }
+    default: {
+      const chipIndex = CHIP_KEY_MAP[e.key]
+      if (chipIndex !== undefined && CHIP_VALUES[chipIndex] !== undefined) {
+        state.selectedChip = CHIP_VALUES[chipIndex]
+        updateChipSelection()
+      }
+    }
+  }
+})
+
 // Init
 buildChipSelector()
 initColorblindMode()
+initTheme()
+updateMuteButton()
+updateModeButton()
 updateUI()
